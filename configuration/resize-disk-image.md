@@ -17,7 +17,7 @@ There are several disk images which can be easily extended. But pay attention to
 
 1048576 MB is the maximum size which can be assigned to a private storage through qubes-manager.
 
-To grow the private disk image of a AppVM beyond this limit [qubes-grow-private](/doc/dom0-tools/qvm-grow-private/) can be used:
+To grow the private disk image of an AppVM beyond this limit [qubes-grow-private](/doc/dom0-tools/qvm-grow-private/) can be used:
 
 ~~~
 qvm-grow-private <vm-name> <size>
@@ -34,14 +34,14 @@ The basic idea is to:
 1.  Shrink filesystem on the private disk image.
 2.  Then shrink the image.
 
-Ext4 does not support online shrinking, so can't be done as convenient as image grown. Note that we don't want to touch the VM filesystem directly in dom0 for security reasons. First you need to start VM without `/rw` mounted. One of the possibility is to interrupt its normal startup by adding `rd.break` kernel option:
+Ext4 does not support online shrinking, and so it cannot be done as conveniently as image growth. Note that we don't want to touch the VM filesystem directly in dom0 for security reasons. First you need to start VM without `/rw` mounted. One possibility is to interrupt its normal startup by adding the `rd.break` kernel option:
 
 ~~~
 qvm-prefs -s <vm-name> kernelopts rd.break
 qvm-start --no-guid <vm-name>
 ~~~
 
-And wait for qrexec connect timeout (or simply press Ctrl-C). Then you can connect to VM console and shrink the filesystem:
+And wait for qrexec connection timeout (or simply press Ctrl-C). Then you can connect to the VM console and shrink the filesystem:
 
 ~~~
 sudo xl console <vm-name>
@@ -57,13 +57,13 @@ umount /sysroot/dev
 poweroff
 ~~~
 
-Now you can resize the image:
+Now you can resize the disk image in dom0:
 
 ~~~
 truncate -s <new-desired-size> /var/lib/qubes/appvms/<vm-name>/private.img
 ~~~
 
-**It is critical to use the same (or bigger for some safety margin) size in truncate call compared to resize2fs call. Otherwise you will loose your data!** Then reset kernel options back to default:
+**It is critical to use the same (or bigger, for some safety margin) size in the truncate call compared to the resize2fs call. Otherwise you will loose your data!** Then reset kernel options back to default:
 
 ~~~
 qvm-prefs -s <vm-name> kernelopts default
@@ -73,21 +73,21 @@ Done.
 
 ### Template disk image
 
-If you want install a lot of software in your TemplateVM, you may need to increase the amount of disk space your TemplateVM can use.
+If you wish to install a lot of software in your TemplateVM, you may need to increase the amount of disk space your TemplateVM can use.
 
 1.  Make sure that all the VMs based on this template are shut off (including netvms etc).
-2.  Sanity check: verify that none of loop device are pointing at this template root.img: `sudo losetup -a`
-3.  Resize root.img file using `truncate -s <desired size>` (the root.img path can be obtained from qvm-prefs).
-4.  If any netvm/proxyvm used by this template is based on it, set template netvm to none.
+2.  Sanity check: verify that no loop devices are pointing to this template's root.img: `sudo losetup -a`
+3.  Resize root.img file using `truncate -s <desired size> <root.img path>` (the root.img path can be obtained from qvm-prefs).
+4.  If the netvm/proxyvm used by this template is based on the template itself, set the template's netvm to none.
 5.  Start the template.
 6.  Execute `sudo resize2fs /dev/mapper/dmroot` in the template.
 7.  Verify available space in the template using `df -h`
 8.  Shutdown the template.
-9.  Restore original netvm setting (if changed), check firewall settings (setting netvm to none causes firewall reset to "block all")
+9.  Restore the original netvm setting (if changed), check firewall settings (setting netvm to none causes firewall reset to "block all")
 
 ### HVM disk image
 
-In this example we will grow the disk image of an HVM to 30GB.
+In this example we will grow the disk image of a HVM to 30GB.
 
 First, stop/shutdown the HVM.
 
